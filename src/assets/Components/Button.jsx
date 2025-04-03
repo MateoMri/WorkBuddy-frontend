@@ -1,11 +1,7 @@
 import "./CSS/style.css"
 const Button = ({ texto }) => {
   return (
-    <a class="button"
-      href="#"
-    >
-      {texto}
-    </a>
+    <button class="button">{texto}</button>
   );
 };
 export default Button;
