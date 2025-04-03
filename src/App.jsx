@@ -2,6 +2,7 @@ import "./App.css";
 import Button from "./assets/Components/Button";
 import TextField from "./assets/Components/TextField";
 import logo from "./assets/logo.png";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   document.body.style.backgroundColor = "#B7A18B";
