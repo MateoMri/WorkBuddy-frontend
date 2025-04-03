@@ -1,18 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Button from './assets/Components/Button'
 import TextField from './assets/Components/TextField'
-function App() {
-  const [count, setCount] = useState(0)
+import logo from "./assets/logo.png"
 
+function App() {
+  document.body.style.backgroundColor= "#B7A18B"
   return (
     <>
-    <TextField hint={"Correo electrónico"} type={"text"}></TextField><br/><br/>
-    <TextField hint={"Contraseña"} type={"password"}></TextField><br/><br/>
+      <img src={logo} alt="Descripción de la imagen" style={{ width: "200px", height: "200px" }} /><br /><br /><br />
+      <TextField hint={"Correo electrónico"} type={"text"}></TextField><br /><br />
+      <TextField hint={"Contraseña"} type={"password"}></TextField><br /><br />
       <Button texto={"ENTRAR"}></Button>
-      
     </>
   )
 }
