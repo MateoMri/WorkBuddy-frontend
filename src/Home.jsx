@@ -29,7 +29,14 @@ const Home = () => {
           <TextField type="search" hint="Buscar"></TextField>
         </div>
       </header>
-      <div>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: "3em",
+        }}
+      >
         <div
           className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border rounded shadow-sm"
           style={{
@@ -50,6 +57,7 @@ const Home = () => {
             Estadísticas
           </h3>
         </div>
+
         <div
           className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border rounded shadow-sm"
           style={{
@@ -67,9 +75,10 @@ const Home = () => {
 
           {/* Título */}
           <h3 className="mb-0" style={{ color: "#333" }}>
-            Usuarios{" "}
+            Usuarios
           </h3>
         </div>
+
         <div
           className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border rounded shadow-sm"
           style={{
@@ -87,7 +96,49 @@ const Home = () => {
 
           {/* Título */}
           <h3 className="mb-0" style={{ color: "#333" }}>
-            Ordenes{" "}
+            Ordenes
+          </h3>
+        </div>
+
+        <div
+          className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border rounded shadow-sm"
+          style={{
+            backgroundColor: "#f8f9fa",
+            cursor: "pointer",
+            width: "200px",
+            textAlign: "center",
+          }}
+        >
+          {/* Icono de cheque */}
+          <i
+            className="bi bi-check2-square"
+            style={{ fontSize: "3rem", color: "black", marginBottom: "10px" }}
+          ></i>
+
+          {/* Título */}
+          <h3 className="mb-0" style={{ color: "#333" }}>
+            Inventario
+          </h3>
+        </div>
+
+        <div
+          className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border rounded shadow-sm"
+          style={{
+            backgroundColor: "#f8f9fa",
+            cursor: "pointer",
+            width: "200px",
+            textAlign: "center",
+          }}
+        >
+          {/* Icono de descuentos */}
+          <i
+            className="bi bi-percent"
+            style={{ fontSize: "3rem", color: "black", marginBottom: "10px" }}
+          ></i>
+
+          {/* Título */}
+          <h3 className="mb-0" style={{ color: "#333" }}>
+            Descuentos
           </h3>
         </div>
         <div
@@ -99,15 +150,36 @@ const Home = () => {
             textAlign: "center",
           }}
         >
-          {/* Icono de  cheque*/}
+          {/* Icono de bandera */}
           <i
-            className="bi bi-check2-square"
+            className="bi bi-flag"
             style={{ fontSize: "3rem", color: "black", marginBottom: "10px" }}
           ></i>
 
           {/* Título */}
           <h3 className="mb-0" style={{ color: "#333" }}>
-            Inventario{" "}
+            Reportes
+          </h3>
+        </div>
+
+        <div
+          className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border rounded shadow-sm"
+          style={{
+            backgroundColor: "#f8f9fa",
+            cursor: "pointer",
+            width: "200px",
+            textAlign: "center",
+          }}
+        >
+          {/* Icono de tuerca */}
+          <i
+            className="bi bi-gear"
+            style={{ fontSize: "3rem", color: "black", marginBottom: "10px" }}
+          ></i>
+
+          {/* Título */}
+          <h3 className="mb-0" style={{ color: "#333" }}>
+            Configuración
           </h3>
         </div>
       </div>
