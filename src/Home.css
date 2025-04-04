@@ -1,0 +1,11 @@
+.botonsote {
+  background-color: #f8f9fa;
+  cursor: pointer;
+  width: 200px;
+  text-align: "center";
+}
+
+.botonsote:hover {
+  transform: scale(1.09);
+  transition: 0.1s ease-in-out;
+}
