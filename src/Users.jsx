@@ -41,7 +41,6 @@ const Users = () => {
             right={"20px"}
             titulo={"Agregar"}
             icon="plus"
-            onClick={goBack}
           ></Fab>
         </div>
       )}
