@@ -1,27 +1,43 @@
 import "bootstrap-icons/font/bootstrap-icons.css";
-const Fab = ({icon, titulo, onClick}) =>{
-    return(
-        <div
-        className="botonsote d-flex flex-column align-items-center justify-content-center p-4 border round shadow-sm"
-        style={{
-          position: "absolute",
-          bottom: "20px",
-          right: "20px",
-          width: "150px", // Ajusta el tamaño del botón
-        }}
-        onClick={onClick}
-      >
-        {/* Icono de cerrar sesión */}
-        <i
-          className={"bi bi-" + icon}
-          style={{ fontSize: "2rem", color: "black", marginBottom: "10px" }}
-        ></i>
 
-        {/* Título */}
-        <h3 className="mb-0" style={{ color: "#333", fontSize: "0.9rem" }}>
-          {titulo}
+const Fab = ({ icon, titulo, onClick,  bottom, right}) => {
+  return (
+    <div
+      className="botonsote d-flex flex-column align-items-center justify-content-center p-2 border shadow-sm" // Eliminado "round" porque lo controlamos en el estilo
+      style={{
+        position: "absolute",
+        bottom: bottom,
+        right: right,
+        width: "100px",
+        height: "100px",
+        borderRadius: "50%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+      onClick={onClick}
+    >
+      {/* Icono de cerrar sesión */}
+      <i
+        className={"bi bi-" + icon}
+        style={{ fontSize: "1.4rem", color: "black", marginBottom: "5px" }}
+      ></i>
+
+      {/* Título */}
+      <h3
+        style={{
+          color: "#333",
+          fontSize: "0.7rem",
+          marginBottom: 0, 
+          fontWeight: "500", 
+          letterSpacing: "0.5px",
+          textAlign: "center"
+        }}
+      >
+        {titulo}
         </h3>
-      </div>
-    )
-}
+    </div>
+  );
+};
+
 export default Fab;

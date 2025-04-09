@@ -3,7 +3,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Home.css";
 import Header from "./assets/Components/Header";
 import GrayButton from "./assets/Components/GrayButton";
-import Fab from "./assets/Components/fab";
+import Fab from "./assets/Components/Fab";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -91,8 +91,9 @@ const Home = () => {
         ></GrayButton>
       </div>
 
-      {/* Botón "Cerrar sesión" en la esquina inferior derecha */}
       <Fab
+        bottom={"20px"}
+        right={"20px"}
         icon={"box-arrow-right"}
         titulo={"Cerrar sesión"}
         onClick={goToLogIn}
