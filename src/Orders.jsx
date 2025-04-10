@@ -3,6 +3,8 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import Header from "./assets/Components/Header";
 import { useNavigate } from "react-router-dom";
 import Fab from "./assets/Components/Fab";
+import Button from "./assets/Components/Button";
+import TextField from "./assets/Components/TextField";
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -23,6 +25,25 @@ const Orders = () => {
         icon={"three-dots-vertical"}
         onClick={handleClick}
       />
+
+<TextField hint={"ID del producto"} type={"text"} />
+<br />
+<br />
+<TextField hint={"Tipo de descuento"} type={"text"} />
+<br />
+<br />
+<TextField hint={"Fecha de inicio"} type={"text"} />
+<br />
+<br />
+<TextField hint={"Fecha de finalización"} type={"text"} />
+<br />
+<br />
+<br />
+<br />
+<div className="d-flex gap-5">
+  <Button texto={"SUBIR"}/>
+  <Button texto={"LIMPIAR"}/>
+</div>
 
       {botones && (
         <div>

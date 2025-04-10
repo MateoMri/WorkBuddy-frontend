@@ -1,0 +1,54 @@
+.tabla-usuarios {
+    width: 90%;
+    max-width: 800px;
+    margin: 40px auto;
+    font-family: sans-serif;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .fila {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr;
+    padding: 12px 10px;
+    align-items: center;
+  }
+  
+  .encabezado {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr;
+    background-color: #8C705F; /* Café oscuro */
+    color: black;
+    font-weight: bold;
+    text-align: center;
+    padding: 12px 10px;
+  }
+  
+  .encabezado > div {
+    flex: 1;
+  }
+  
+  .fila:not(.encabezado):nth-child(odd) {
+    background-color: #D8C3A5; /* Beige claro */
+  }
+  
+  .fila:not(.encabezado):nth-child(even) {
+    background-color: white;
+  }
+  
+  .input {
+    flex: 1;
+    padding: 8px 10px;
+    border: none;
+    background-color: transparent;
+    font-size: 14px;
+  }
+  
+  .input:focus {
+    outline: none;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+  }
+  
