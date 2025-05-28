@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Home.css";
-import Header from "./assets/Components/Header";
-import GrayButton from "./assets/Components/GrayButton";
-import Fab from "./assets/Components/Fab";
+import Header from "../assets/Components/Header";
+import GrayButton from "../assets/Components/GrayButton";
+import Fab from "../assets/Components/Fab";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {

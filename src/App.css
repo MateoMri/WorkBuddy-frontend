@@ -5,6 +5,36 @@
   text-align: center;
 }
 
+/* Estilos para el formulario de login */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #B7A18B;
+}
+
+.login-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.login-form h2 {
+  color: #5a4a3f;
+  margin-bottom: 1.5rem;
+}
+
+/* Estilos generales para la aplicación */
+.app-container {
+  min-height: 100vh;
+}
+
+/* Estilos originales */
 .logo {
   height: 6em;
   padding: 1.5em;

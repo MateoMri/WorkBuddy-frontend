@@ -1,9 +1,14 @@
 import "./CSS/style.css"
-import { useNavigate } from 'react-router-dom';
 
-const Button = ({ texto, onClick }) => {
+const Button = ({ texto, onClick, disabled }) => {
   return (
-    <button class="button" onClick={onClick}>{texto}</button>
+    <button 
+      className="button" 
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {texto}
+    </button>
   );
 };
 export default Button;

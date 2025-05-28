@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import Header from "./assets/Components/Header";
+import Header from "../assets/Components/Header";
 import { useNavigate } from "react-router-dom";
-import Fab from "./assets/Components/Fab";
+import Fab from "../assets/Components/Fab";
 
 const Stats = () => {
   const navigate = useNavigate();
