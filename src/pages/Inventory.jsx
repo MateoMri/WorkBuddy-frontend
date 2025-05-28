@@ -3,9 +3,15 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import Header from "../assets/Components/Header";
 import { useNavigate } from "react-router-dom";
 import Fab from "../assets/Components/Fab";
+<<<<<<< HEAD
 import ProductosCard from "../assets/Components/ProductsCard"; // Asegúrate de importar ProductosCard
 import { toast } from "react-hot-toast";
 import { Modal, Button, Form } from "react-bootstrap";
+=======
+
+import ProductsCard from "../assets/Components/ProductsCard"; // Importando el componente ProductsCard
+
+>>>>>>> fb6f87d69b304bdc49df4902cc6ebf03caa384f5
 const Inventory = () => {
   const navigate = useNavigate();
   const goBack = () => {
@@ -88,7 +94,7 @@ const Inventory = () => {
         <div className="row">
           {productos.map((producto) => (
             <div className="col-md-4" key={producto._id}>
-              <ProductosCard
+              <ProductsCard
                 producto={producto}
                 borrarProducto={() => borrarProducto(producto._id)}
                 actualizarProducto={() =>
