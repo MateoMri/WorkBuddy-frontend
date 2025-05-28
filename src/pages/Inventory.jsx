@@ -3,6 +3,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import Header from "../assets/Components/Header";
 import { useNavigate } from "react-router-dom";
 import Fab from "../assets/Components/Fab";
+
 import ProductsCard from "../assets/Components/ProductsCard"; // Importando el componente ProductsCard
 
 const Inventory = () => {
@@ -12,13 +13,13 @@ const Inventory = () => {
   };
 
   const [loading, setLoading] = useState(true);
-  const [botones, setBotones] = useState(false);
+  const [botones, setBotones] = useState(false); // Estado para los FABs adicionales
   const [productos, setProductos] = useState([]);
 
   // Fetch productos desde la API
   const fetchProductos = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/products"); // Corregido
+      const response = await fetch("http://localhost:4000/wb/products"); // Corregido
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Error al cargar productos");
@@ -35,7 +36,7 @@ const Inventory = () => {
   // Eliminar un producto
   const borrarProducto = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/products/${id}`, {
+      const response = await fetch(`http://localhost:4000/wb/products/${id}`, {
         method: "DELETE",
       });
 
@@ -44,6 +45,7 @@ const Inventory = () => {
       }
 
       fetchProductos();
+      
     } catch (error) {
       console.error("Error al borrar producto:", error);
     }
@@ -59,48 +61,51 @@ const Inventory = () => {
     fetchProductos();
   }, []);
 
+  if (loading)
+    return (
+      <>
+        <Header texto={"Inventario"} buscador={true} />
+        <h1>Cargando...</h1>
+      </>
+    );
   return (
     <>
       <Header texto={"Inventario"} buscador={true} />
 
-      <div className="container" style={{ paddingTop: "50px" }}>
+      <div className="container" style={{ paddingTop: "100px" }}>
         <div className="row">
           {productos.map((producto) => (
             <div className="col-md-4" key={producto._id}>
               <ProductsCard
                 producto={producto}
                 borrarProducto={() => borrarProducto(producto._id)}
-                actualizarProducto={() => console.log("Actualizar producto", producto)} // Placeholder
+                actualizarProducto={() =>
+                  console.log("Actualizar producto", producto)
+                } // Placeholder
               />
             </div>
           ))}
         </div>
       </div>
 
-      <Fab
-        bottom={20}
-        right={20}
-        icon={"three-dots-vertical"}
-        onClick={handleClick}
-      />
+      {/* FAB principal */}
+      <Fab icon={"three-dots-vertical"} onClick={handleClick} />
 
+      {/* Mostrar FABs adicionales cuando `botones` es true */}
       {botones && (
-        <div>
+        <>
           <Fab
-            bottom={130}
-            right={20}
             titulo={"Regresar"}
             icon="arrow-90deg-left"
             onClick={goBack}
-          ></Fab>
-
+            style={{ bottom: "130px" }} // Ajusta la posición hacia arriba
+          />
           <Fab
-            bottom={240}
-            right={20}
             titulo={"Agregar"}
             icon="plus"
-          ></Fab>
-        </div>
+            style={{ bottom: "240px" }} // Ajusta la posición hacia arriba
+          />
+        </>
       )}
     </>
   );
