@@ -48,13 +48,27 @@ const AuthProvider = ({ children }) => {
   };
 
   // Función para cerrar sesión
-  const logout = useCallback(() => {
-    localStorage.removeItem("authToken");
-    setCurrentUser(null);
-    setUserType("");
-    setIsAuthenticated(false);
-    navigate("/");
-    toast.success("Sesión cerrada correctamente");
+  const logout = useCallback(async () => {
+    try {
+      // Primero llamar al logout del API para limpiar cookies
+      await authService.logout();
+      
+      // Luego actualizar el estado local
+      setCurrentUser(null);
+      setUserType("");
+      setIsAuthenticated(false);
+      navigate("/");
+      toast.success("Sesión cerrada correctamente");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      // Aún si hay error, limpiamos el estado local
+      localStorage.removeItem("authToken");
+      setCurrentUser(null);
+      setUserType("");
+      setIsAuthenticated(false);
+      navigate("/");
+      toast.error("Hubo un problema al cerrar sesión");
+    }
   }, [navigate]);
 
   // Función para iniciar sesión

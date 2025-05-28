@@ -124,17 +124,68 @@ export const authService = {
     }
   },
   
-  // Cerrar sesión
+  // Cerrar sesión con método agresivo para eliminar cookies
   logout: async () => {
     try {
-      // Si tu backend tiene un endpoint para logout
-      // const response = await api.post('/logout');
-      // return response.data;
+      // PASO 1: Método agresivo para eliminar cookies en el cliente
+      // Intentar eliminar la cookie authToken con diferentes configuraciones
+      const cookieName = 'authToken';
       
-      // Si no hay endpoint de logout, solo limpiamos localmente
+      // Función auxiliar para borrar cookie con diferentes configuraciones
+      const deleteCookie = (name, options = {}) => {
+        const { path = '/', domain } = options;
+        const domainPart = domain ? `; domain=${domain}` : '';
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}${domainPart}`;
+      };
+      
+      // Intentar borrar con varias configuraciones
+      deleteCookie(cookieName); // Básico
+      deleteCookie(cookieName, { path: '/' }); // Con path
+      deleteCookie(cookieName, { path: '/wb' }); // Con path alternativo
+      deleteCookie(cookieName, { domain: window.location.hostname }); // Con dominio
+      deleteCookie(cookieName, { path: '/', domain: window.location.hostname }); // Completo
+      
+      // Para cookies en subdominios
+      if (window.location.hostname !== 'localhost') {
+        const domain = window.location.hostname.split('.').slice(-2).join('.');
+        deleteCookie(cookieName, { domain });
+      }
+      
+      console.log('Intentos de eliminación de cookie desde el cliente completados');
+      
+      // PASO 2: Llamar al endpoint de logout en el backend
+      const response = await api.post('/logout', {
+        cookieInfo: {
+          name: cookieName,
+          path: '/',
+          domain: window.location.hostname
+        }
+      }, { 
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // PASO 3: Limpiar almacenamiento local
       localStorage.removeItem('authToken');
-      return { success: true };
+      sessionStorage.removeItem('authToken');
+      
+      // PASO 4: Forzar un refresco de la página si es necesario
+      // Esto puede ayudar a limpiar cualquier estado persistente
+      // window.location.href = '/'; // Descomentar si quieres forzar un refresco
+      
+      console.log('Logout exitoso:', response.data);
+      return response.data;
     } catch (error) {
+      console.error('Error en logout:', error);
+      // Aún si hay error, limpiamos localmente
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+      
+      // Intentar borrar cookie incluso si hay error
+      document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
+      
       throw error.response?.data || { message: 'Error al cerrar sesión' };
     }
   }
