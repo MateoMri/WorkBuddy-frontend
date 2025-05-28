@@ -3,7 +3,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import Header from "../assets/Components/Header";
 import { useNavigate } from "react-router-dom";
 import Fab from "../assets/Components/Fab";
-import ProductosCard from "../assets/Components/ProductosCard"; // Asegúrate de importar ProductosCard
+import ProductsCard from "../assets/Components/ProductsCard"; // Importando el componente ProductsCard
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ const Inventory = () => {
         <div className="row">
           {productos.map((producto) => (
             <div className="col-md-4" key={producto._id}>
-              <ProductosCard
+              <ProductsCard
                 producto={producto}
                 borrarProducto={() => borrarProducto(producto._id)}
                 actualizarProducto={() => console.log("Actualizar producto", producto)} // Placeholder
