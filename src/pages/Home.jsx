@@ -5,7 +5,7 @@ import Header from "../assets/Components/Header";
 import GrayButton from "../assets/Components/GrayButton";
 import Fab from "../assets/Components/Fab";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-hot-toast";
 const Home = () => {
   const navigate = useNavigate();
 
@@ -34,6 +34,28 @@ const Home = () => {
   };
   const goToSettings = () => {
     navigate("/Settings");
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Sesión cerrada correctamente");
+
+      // Forzar un refresco completo de la página para limpiar cualquier estado
+      // incluidas las cookies persistentes
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      toast.error("Error al cerrar sesión");
+
+      // Incluso en caso de error, intentar limpiar el estado
+      localStorage.removeItem("authToken");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
+    }
   };
   useEffect(() => {
     // Cambiamos el color de fondo cuando el componente se monte

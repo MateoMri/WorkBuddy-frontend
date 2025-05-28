@@ -4,7 +4,8 @@ import Header from "../assets/Components/Header";
 import { useNavigate } from "react-router-dom";
 import Fab from "../assets/Components/Fab";
 import ProductosCard from "../assets/Components/ProductsCard"; // Asegúrate de importar ProductosCard
-
+import { toast } from "react-hot-toast";
+import { Modal, Button, Form } from "react-bootstrap";
 const Inventory = () => {
   const navigate = useNavigate();
   const goBack = () => {
@@ -14,7 +15,9 @@ const Inventory = () => {
   const [loading, setLoading] = useState(true);
   const [botones, setBotones] = useState(false); // Estado para los FABs adicionales
   const [productos, setProductos] = useState([]);
-
+  const [showModal, setShowModal] = useState(false);
+  const [nuevoProducto, setNuevoProducto] = useState({});
+  const [modoEdicion, setModoEdicion] = useState(false);
   // Fetch productos desde la API
   const fetchProductos = async () => {
     try {
@@ -44,7 +47,7 @@ const Inventory = () => {
       }
 
       fetchProductos();
-      
+      toast.success("Producto eliminado con éxito");
     } catch (error) {
       console.error("Error al borrar producto:", error);
     }
@@ -54,7 +57,17 @@ const Inventory = () => {
   const handleClick = () => {
     setBotones(!botones);
   };
-
+  const cerrarModal = () => {
+    setShowModal(false);
+    setNuevoProducto({});
+    setModoEdicion(false);
+  };
+  const crearProducto = () => {
+    console.log("producto creado");
+  };
+  const guardarCambiosProducto = ()=>{
+    console.log("producto actualizado")
+  }
   // Llamar a la API para obtener productos cuando se monta el componente
   useEffect(() => {
     fetchProductos();
@@ -87,6 +100,58 @@ const Inventory = () => {
         </div>
       </div>
 
+      <Modal show={showModal} onHide={cerrarModal}>
+        <Modal.Header
+          closeButton
+          style={{
+            backgroundColor: modoEdicion ? "#ffc107" : "#0d6efd",
+            color: "white",
+          }}
+        >
+          <Modal.Title>
+            {modoEdicion ? "Editar Producto" : "Agregar Producto"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            {[
+              { label: "Nombre", key: "name" },
+              { label: "Descripción", key: "description" },
+              { label: "Categoría", key: "category" },
+              { label: "Precio", key: "price", type: "number" },
+              { label: "Stock", key: "stock", type: "number" },
+            ].map((campo) => (
+              <Form.Group className="mb-2" key={campo.key}>
+                <Form.Label>{campo.label}</Form.Label>
+                <Form.Control
+                  type={campo.type || "text"}
+                  value={nuevoProducto[campo.key] || ""}
+                  onChange={(e) =>
+                    setNuevoProducto({
+                      ...nuevoProducto,
+                      [campo.key]:
+                        campo.type === "number"
+                          ? parseFloat(e.target.value)
+                          : e.target.value,
+                    })
+                  }
+                />
+              </Form.Group>
+            ))}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cerrarModal}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            onClick={modoEdicion ? guardarCambiosProducto : crearProducto}
+          >
+            {modoEdicion ? "Actualizar" : "Guardar"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
       {/* FAB principal */}
       <Fab icon={"three-dots-vertical"} onClick={handleClick} />
 
@@ -102,7 +167,8 @@ const Inventory = () => {
           <Fab
             titulo={"Agregar"}
             icon="plus"
-            style={{ bottom: "240px" }} // Ajusta la posición hacia arriba
+            style={{ bottom: "240px" }}
+            onClick={() => setShowModal(true)} // Ajusta la posición hacia arriba
           />
         </>
       )}
