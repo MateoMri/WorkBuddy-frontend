@@ -11,7 +11,7 @@ const Offers = () => {
  }, []);
  const fetchOffers = async () => {
    try {
-     const res = await fetch("http://localhost:3000/api/offers"); // Asegúrate de que tu backend esté en esta ruta
+     const res = await fetch("http://localhost:4000/wb/offers"); // Asegúrate de que tu backend esté en esta ruta
      const data = await res.json();
      setOffers(data);
    } catch (err) {
@@ -20,7 +20,7 @@ const Offers = () => {
  };
  const handleCreate = async (offer) => {
    try {
-     const res = await fetch("http://localhost:3000/api/offers", {
+     const res = await fetch("http://localhost:4000/wb/offers", {
        method: "POST",
        headers: { "Content-Type": "application/json" },
        body: JSON.stringify(offer),
@@ -32,7 +32,7 @@ const Offers = () => {
  };
  const handleUpdate = async (id, updatedOffer) => {
    try {
-     const res = await fetch(`http://localhost:3000/api/offers/${id}`, {
+     const res = await fetch(`http://localhost:4000/wb/offers/${id}`, {
        method: "PUT",
        headers: { "Content-Type": "application/json" },
        body: JSON.stringify(updatedOffer),
@@ -48,7 +48,7 @@ const Offers = () => {
  };
  const handleDelete = async (id) => {
    try {
-     const res = await fetch(`http://localhost:3000/api/offers/${id}`, {
+     const res = await fetch(`http://localhost:4000/wb/offers/${id}`, {
        method: "DELETE",
      });
      if (res.ok) fetchOffers();

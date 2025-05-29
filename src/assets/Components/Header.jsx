@@ -44,7 +44,7 @@ const Header = ({ texto, buscador }) => {
       
       <div style={{ position: "absolute", right: "0", marginRight: "25px" }} className="d-flex align-items-center">
         {/* Si buscador es true, se renderiza el buscador */}
-        {buscador && <TextField type="search" hint="Buscar" className="me-3" />}
+        {buscador && <TextField type="text" hint="Buscar" className="me-3" />}
         
         {/* Botón de cerrar sesión (solo se muestra si el usuario está autenticado) */}
         {isAuthenticated && (

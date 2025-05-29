@@ -3,15 +3,9 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import Header from "../assets/Components/Header";
 import { useNavigate } from "react-router-dom";
 import Fab from "../assets/Components/Fab";
-<<<<<<< HEAD
-import ProductosCard from "../assets/Components/ProductsCard"; // Asegúrate de importar ProductosCard
 import { toast } from "react-hot-toast";
 import { Modal, Button, Form } from "react-bootstrap";
-=======
-
 import ProductsCard from "../assets/Components/ProductsCard"; // Importando el componente ProductsCard
-
->>>>>>> fb6f87d69b304bdc49df4902cc6ebf03caa384f5
 const Inventory = () => {
   const navigate = useNavigate();
   const goBack = () => {
@@ -22,7 +16,14 @@ const Inventory = () => {
   const [botones, setBotones] = useState(false); // Estado para los FABs adicionales
   const [productos, setProductos] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [nuevoProducto, setNuevoProducto] = useState({});
+  const [nuevoProducto, setNuevoProducto] = useState({
+    name: "",
+    description: "",
+    category: "",
+    price: 0,
+    stock: 0,
+    image: null, // Aquí se guardará la imagen seleccionada
+  });
   const [modoEdicion, setModoEdicion] = useState(false);
   // Fetch productos desde la API
   const fetchProductos = async () => {
@@ -65,15 +66,95 @@ const Inventory = () => {
   };
   const cerrarModal = () => {
     setShowModal(false);
-    setNuevoProducto({});
     setModoEdicion(false);
+    setNuevoProducto({
+      name: "",
+      description: "",
+      category: "",
+      price: 0,
+      stock: 0,
+      image: null,
+    });
   };
-  const crearProducto = () => {
-    console.log("producto creado");
+  const crearProducto = async () => {
+    try {
+      const formData = new FormData();
+
+      // Agregar los datos del formulario al FormData
+      formData.append("name", nuevoProducto.name);
+      formData.append("description", nuevoProducto.description);
+      formData.append("category", nuevoProducto.category);
+      formData.append("price", nuevoProducto.price);
+      formData.append("stock", nuevoProducto.stock);
+
+      // Agregar la imagen si existe
+      if (nuevoProducto.image) {
+        formData.append("image", nuevoProducto.image);
+      }
+
+      const response = await fetch("http://localhost:4000/wb/products", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast.success("Producto creado con éxito");
+        fetchProductos()
+        cerrarModal(); // Cerrar modal y resetear formulario
+      } else {
+        toast.error(data.message || "Error creando el producto");
+      }
+    } catch (error) {
+      console.error("Error al crear producto:", error);
+      toast.error("Error creando el producto");
+    }
   };
-  const guardarCambiosProducto = ()=>{
-    console.log("producto actualizado")
-  }
+  
+  const guardarCambiosProducto = async () => {
+    try {
+      const formData = new FormData();
+  
+      formData.append("name", nuevoProducto.name);
+      formData.append("description", nuevoProducto.description);
+      formData.append("category", nuevoProducto.category);
+      formData.append("price", nuevoProducto.price);
+      formData.append("stock", nuevoProducto.stock);
+  
+      // Solo incluir la imagen si fue modificada
+      if (nuevoProducto.image) {
+        formData.append("image", nuevoProducto.image);
+      }
+  
+      const response = await fetch(`http://localhost:4000/wb/products/${nuevoProducto._id}`, {
+        method: "PUT",
+        body: formData,
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        toast.success("Producto actualizado con éxito");
+        cerrarModal();
+        fetchProductos(); // Refrescar lista
+      } else {
+        toast.error(data.message || "Error actualizando el producto");
+      }
+    } catch (error) {
+      console.error("Error al actualizar producto:", error);
+      toast.error("Error actualizando el producto");
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNuevoProducto({
+        ...nuevoProducto,
+        image: file, // Guardamos el archivo de imagen
+      });
+    }
+  };
   // Llamar a la API para obtener productos cuando se monta el componente
   useEffect(() => {
     fetchProductos();
@@ -97,9 +178,14 @@ const Inventory = () => {
               <ProductsCard
                 producto={producto}
                 borrarProducto={() => borrarProducto(producto._id)}
-                actualizarProducto={() =>
-                  console.log("Actualizar producto", producto)
-                } // Placeholder
+                actualizarProducto={() => {
+                  setNuevoProducto({
+                    ...producto,
+                    image: null, // Por defecto no se actualiza la imagen
+                  });
+                  setModoEdicion(true);
+                  setShowModal(true);
+                }}
               />
             </div>
           ))}
@@ -120,6 +206,17 @@ const Inventory = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
+            {/* Campo para seleccionar imagen */}
+            <Form.Group className="mb-2">
+              <Form.Label>Imagen</Form.Label>
+              <Form.Control
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </Form.Group>
+
+            {/* Otros campos del formulario */}
             {[
               { label: "Nombre", key: "name" },
               { label: "Descripción", key: "description" },
@@ -150,10 +247,7 @@ const Inventory = () => {
           <Button variant="secondary" onClick={cerrarModal}>
             Cancelar
           </Button>
-          <Button
-            variant="primary"
-            onClick={modoEdicion ? guardarCambiosProducto : crearProducto}
-          >
+          <Button variant="primary" onClick={modoEdicion ? guardarCambiosProducto : crearProducto}>
             {modoEdicion ? "Actualizar" : "Guardar"}
           </Button>
         </Modal.Footer>
