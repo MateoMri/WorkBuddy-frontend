@@ -3,81 +3,50 @@ import OfferForm from "../components/OfferForm";
 import OffersList from "../components/OffersList";
 const Offers = () => {
  const [offers, setOffers] = useState([]);
- const [editMode, setEditMode] = useState(false);
- const [selectedOffer, setSelectedOffer] = useState(null);
- // Obtener todas las ofertas al cargar
+ const [editingOffer, setEditingOffer] = useState(null);
  useEffect(() => {
    fetchOffers();
  }, []);
  const fetchOffers = async () => {
-   try {
-     const res = await fetch("http://localhost:4000/wb/offers"); // Asegúrate de que tu backend esté en esta ruta
-     const data = await res.json();
-     setOffers(data);
-   } catch (err) {
-     console.error("Error al cargar ofertas:", err);
-   }
+   const res = await fetch("http://localhost:4000/wb/offers");
+   const data = await res.json();
+   setOffers(data);
  };
- const handleCreate = async (offer) => {
-   try {
-     const res = await fetch("http://localhost:4000/wb/offers", {
-       method: "POST",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify(offer),
-     });
-     if (res.ok) fetchOffers();
-   } catch (err) {
-     console.error("Error al crear oferta:", err);
-   }
+ const addOffer = async (newOffer) => {
+   await fetch("http://localhost:4000/wb/offers", {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify(newOffer),
+   });
+   fetchOffers();
  };
- const handleUpdate = async (id, updatedOffer) => {
-   try {
-     const res = await fetch(`http://localhost:4000/wb/offers/${id}`, {
-       method: "PUT",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify(updatedOffer),
-     });
-     if (res.ok) {
-       setEditMode(false);
-       setSelectedOffer(null);
-       fetchOffers();
-     }
-   } catch (err) {
-     console.error("Error al actualizar oferta:", err);
-   }
+ const updateOffer = async (id, updatedData) => {
+   await fetch(`http://localhost:4000/wb/offers/${id}`, {
+     method: "PUT",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify(updatedData),
+   });
+   setEditingOffer(null);
+   fetchOffers();
  };
- const handleDelete = async (id) => {
-   try {
-     const res = await fetch(`http://localhost:4000/wb/offers/${id}`, {
-       method: "DELETE",
-     });
-     if (res.ok) fetchOffers();
-   } catch (err) {
-     console.error("Error al borrar oferta:", err);
-   }
- };
- const handleEdit = (offer) => {
-   setEditMode(true);
-   setSelectedOffer(offer);
- };
- const clearSelected = () => {
-   setSelectedOffer(null);
+ const deleteOffer = async (id) => {
+   await fetch(`http://localhost:4000/wb/offers/${id}`, {
+     method: "DELETE",
+   });
+   fetchOffers();
  };
  return (
-<div className="container py-4">
-<h2 className="text-center mb-4">Gestión de Descuentos</h2>
+<div className="container mt-4">
 <OfferForm
-       onCreate={handleCreate}
-       onUpdate={handleUpdate}
-       editMode={editMode}
-       selectedOffer={selectedOffer}
-       setEditMode={setEditMode}
-       clearSelected={clearSelected}
+       addOffer={addOffer}
+       updateOffer={updateOffer}
+       editingOffer={editingOffer}
+       cancelEdit={() => setEditingOffer(null)}
      />
 <OffersList
        offers={offers}
-       onEdit={handleEdit}
-       onDelete={handleDelete}
+       onEdit={(offer) => setEditingOffer(offer)}
+       onDelete={deleteOffer}
      />
 </div>
  );
