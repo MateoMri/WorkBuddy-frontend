@@ -1,34 +1,77 @@
-.tabla-usuarios {
-    width: 90%;
-    max-width: 800px;
-    margin: 40px auto;
-    font-family: sans-serif;
-    border-collapse: collapse;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .fila {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1fr;
-    padding: 12px 10px;
-    align-items: center;
-  }
-  
-  .encabezado {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1fr;
-    background-color: #8C705F; /* Café oscuro */
-    color: black;
-    font-weight: bold;
-    text-align: center;
-    padding: 12px 10px;
-  }
-  
-  .encabezado > div {
-    flex: 1;
-  }
+.users-container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+.client-list {
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  margin-bottom: 0;
+  background-color: white;
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px 15px;
+  font-weight: 600;
+}
+
+.table tbody tr {
+  transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+  padding: 12px 15px;
+}
+
+/* Estilo para resaltar cuando un cliente ha sido actualizado */
+.highlight-update {
+  background-color: #fffacd !important; /* Amarillo claro */
+  animation: pulse 1.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0% { background-color: #fffacd; }
+  50% { background-color: #ffff99; }
+  100% { background-color: #fffacd; }
+}
+
+/* Estilos para los botones de acción */
+.table button {
+  margin-right: 5px;
+}
+
+/* Estilos para los modales */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1rem;
+}
+
+/* Estilos para los botones flotantes (FAB) */
+.fab-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
   
   .fila:not(.encabezado):nth-child(odd) {
     background-color: #D8C3A5; /* Beige claro */

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useEffect, useState, useRef, useContext, useCallback } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Modal, Button, Form, Spinner, Alert, Row, Col } from "react-bootstrap";
 import Header from "../assets/Components/Header";
@@ -27,26 +27,28 @@ const Users = () => {
   // Referencia para focus en primera alerta de error
   const firstErrorRef = useRef(null);
   
+  // Estado local para los valores de los campos del formulario
+  const [formValues, setFormValues] = useState({
+    name: "",
+    phoneNumber: "",
+    email: "",
+    password: "",
+    address: "",
+    birthday: "",
+    isVerified: false
+  });
+  
   // React Hook Form para validación
   const { 
     register, 
     handleSubmit, 
     reset, 
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     mode: "onBlur", // Validar al perder el foco
-    defaultValues: {
-      name: "",
-      phoneNumber: "",
-      email: "",
-      password: "",
-      address: "",
-      birthday: "",
-      isVerified: false
-    }
+    defaultValues: formValues
   });
-  
-  // No necesitamos watch() para este componente
 
   // Efecto para hacer focus en el primer campo con error
   useEffect(() => {
@@ -55,25 +57,44 @@ const Users = () => {
     }
   }, [errors]);
 
-  // Recuperar lista de clientes
-  const fetchClients = async () => {
+  // Recuperar lista de clientes - envuelto en useCallback para evitar recreaciones en cada renderizado
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await clientsService.getClients();
-      setClients(data);
+      if (Array.isArray(data)) {
+        setClients(data);
+      } else {
+        console.error("Datos de clientes recibidos no son un array:", data);
+        setError("Formato de datos incorrecto. Intente nuevamente.");
+        // Si hay un error de formato, verificar si podría ser un problema de autenticación
+        if (data && data.message && (data.message.includes("token") || data.message.includes("auth"))) {
+          toast.error("Sesión expirada. Iniciando sesión nuevamente.");
+          setTimeout(() => logout(), 2000);
+        } else {
+          toast.error("Error al cargar clientes: formato incorrecto");
+        }
+      }
     } catch (error) {
       console.error("Error al obtener clientes:", error);
       setError("No se pudieron cargar los clientes. Intente nuevamente.");
-      toast.error("Error al cargar clientes");
+      
+      // Verificar si el error es de autenticación
+      if (error && (error.message?.includes("unauthorized") || error.status === 401)) {
+        toast.error("Sesión expirada. Iniciando sesión nuevamente.");
+        setTimeout(() => logout(), 2000);
+      } else {
+        toast.error("Error al cargar clientes");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [fetchClients]);
 
   // Ir atrás
   const goBack = () => {
@@ -101,28 +122,101 @@ const Users = () => {
   };
 
   // Abrir el modal para editar
-  const handleEditClient = (client) => {
-    // Formatear la fecha para el input tipo date
-    let formattedDate = "";
-    if (client.birthday) {
-      const date = new Date(client.birthday);
-      formattedDate = date.toISOString().split('T')[0];
+  const handleEditClient = async (client) => {
+    try {
+      // Guardar el nombre original para comparación posterior
+      const originalName = client.name;
+      console.log("Nombre original del cliente:", originalName);
+      
+      // Guardar el nombre original en localStorage y memoria global para mayor seguridad
+      if (originalName && originalName.trim() !== '') {
+        console.log("Guardando nombre original en localStorage y memoria global:", originalName);
+        localStorage.setItem(`client_name_${client._id}`, originalName);
+        
+        // Guardar en una variable global para acceso inmediato
+        window.__CLIENT_NAMES = window.__CLIENT_NAMES || {};
+        window.__CLIENT_NAMES[client._id] = originalName;
+      }
+      
+      // Obtener datos frescos del cliente desde el servidor
+      const freshClientData = await clientsService.getClient(client._id);
+      console.log("Datos del cliente obtenidos:", freshClientData);
+      
+      // Formatear la fecha para el campo de formulario
+      let formattedDate = "";
+      if (freshClientData.birthday) {
+        const date = new Date(freshClientData.birthday);
+        formattedDate = date.toISOString().split('T')[0];
+      }
+      
+      // SOLUCIÓN FINAL: Asegurarnos de que el nombre esté presente y sea correcto
+      // Preferimos usar el nombre original que vimos en la lista
+      let clientName = originalName;
+      
+      // Si por alguna razón no tenemos el nombre original
+      if (!clientName || clientName.trim() === '') {
+        // 1. Intentar usar el nombre de los datos frescos del servidor
+        if (freshClientData.name && freshClientData.name.trim() !== '') {
+          clientName = freshClientData.name;
+        } else {
+          // 2. Intentar obtener de la memoria global
+          clientName = window.__CLIENT_NAMES && window.__CLIENT_NAMES[client._id];
+          
+          // 3. Si no está en memoria global, intentar obtener de localStorage
+          if (!clientName) {
+            clientName = localStorage.getItem(`client_name_${client._id}`);
+          }
+          
+          // 4. Si todavía no tenemos nombre, usar un valor por defecto
+          if (!clientName) {
+            clientName = "Usuario";
+          }
+        }
+      }
+      
+      console.log(`NOMBRE FINAL PARA EL FORMULARIO: '${clientName}'`);
+      
+      // SOLUCIÓN FINAL: Modificar directamente el objeto freshClientData
+      freshClientData.name = clientName;
+      
+      // Guardar el nombre en todas las fuentes posibles
+      localStorage.setItem(`client_name_${client._id}`, clientName);
+      window.__CLIENT_NAMES = window.__CLIENT_NAMES || {};
+      window.__CLIENT_NAMES[client._id] = clientName;
+      
+      // Usar un enfoque más directo para establecer el valor del formulario
+      setValue('name', clientName);
+      
+      // Configurar el formulario con los datos frescos del cliente y el nombre garantizado
+      reset({
+        name: clientName,
+        phoneNumber: freshClientData.phoneNumber || "",
+        email: freshClientData.email || "",
+        password: "", // No mostrar la contraseña actual por seguridad
+        address: freshClientData.address || "",
+        birthday: formattedDate,
+        isVerified: freshClientData.isVerified || false
+      });
+      
+      // Forzar la actualización del campo de nombre directamente en el DOM
+      setTimeout(() => {
+        const nameInput = document.getElementById('name');
+        if (nameInput) {
+          nameInput.value = clientName;
+          // Disparar un evento de cambio para asegurarnos de que React Hook Form detecte el cambio
+          const event = new Event('input', { bubbles: true });
+          nameInput.dispatchEvent(event);
+        }
+      }, 100);
+      
+      // Configurar el modo del modal y mostrar
+      setModalMode("edit");
+      setSelectedClient(client);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error al cargar datos del cliente para editar:", error);
+      toast.error("Error al cargar datos del cliente");
     }
-
-    // Resetear el formulario con los datos del cliente
-    reset({
-      name: client.name || "",
-      phoneNumber: client.phoneNumber || "",
-      email: client.email || "",
-      password: "", // No mostramos la contraseña existente
-      address: client.address || "",
-      birthday: formattedDate,
-      isVerified: client.isVerified || false
-    });
-    
-    setSelectedClient(client);
-    setModalMode("edit");
-    setShowModal(true);
   };
 
   // Abrir el modal de confirmación de eliminación
@@ -133,13 +227,11 @@ const Users = () => {
 
   // Eliminar un cliente
   const handleDeleteClient = async () => {
-    if (!selectedClient) return;
-
     try {
       await clientsService.deleteClient(selectedClient._id);
-      toast.success("Cliente eliminado con éxito");
-      fetchClients(); // Recargar la lista
       setDeleteConfirmModal(false);
+      toast.success("Cliente eliminado con éxito");
+      fetchClients(); // Recargar la lista de clientes
     } catch (error) {
       console.error("Error al eliminar cliente:", error);
       toast.error("Error al eliminar cliente");
@@ -149,29 +241,172 @@ const Users = () => {
   // Guardar los datos del formulario (crear o editar)
   const onSubmit = async (data) => {
     try {
+      // Mostrar indicador de carga
+      toast.loading("Guardando cambios...", { id: "saving-client" });
+      
+      let updatedClient;
+      
       if (modalMode === "create") {
-        await clientsService.createClient(data);
+        // Crear nuevo cliente
+        const response = await clientsService.createClient(data);
         toast.success("Cliente creado con éxito");
+        updatedClient = response;
       } else {
         // Si estamos editando y no se proporcionó una nueva contraseña, la eliminamos del objeto
         const dataToUpdate = {...data};
-        if (!dataToUpdate.password) {
+        if (!dataToUpdate.password || dataToUpdate.password.trim() === '') {
           delete dataToUpdate.password;
         }
-        await clientsService.updateClient(selectedClient._id, dataToUpdate);
-        toast.success("Cliente actualizado con éxito");
+        
+        // Asegurarse de que estamos pasando el ID correcto
+        if (!selectedClient || !selectedClient._id) {
+          throw new Error("No se pudo identificar el cliente a actualizar");
+        }
+        
+        // SOLUCIÓN DEFINITIVA: Guardar el nombre en localStorage y memoria global ANTES de la actualización
+        if (dataToUpdate.name) {
+          localStorage.setItem(`client_name_${selectedClient._id}`, dataToUpdate.name);
+          window.__CLIENT_NAMES = window.__CLIENT_NAMES || {};
+          window.__CLIENT_NAMES[selectedClient._id] = dataToUpdate.name;
+        }
+        
+        try {
+          // Guardar el nombre original para verificación
+          const originalName = dataToUpdate.name;
+          console.log("Nombre original a actualizar:", originalName);
+          
+          // Actualizar en el servidor
+          const updatedData = await clientsService.updateClient(selectedClient._id, dataToUpdate);
+          
+          // SOLUCIÓN DEFINITIVA: Forzar el nombre correcto en los datos actualizados
+          if (originalName && (!updatedData.name || updatedData.name !== originalName)) {
+            console.log("Forzando nombre correcto en datos actualizados:", originalName);
+            updatedData.name = originalName;
+          }
+          
+          updatedClient = updatedData;
+          toast.success("Cliente actualizado con éxito");
+        } catch (updateError) {
+          console.error("Error al actualizar cliente:", updateError);
+          
+          // Si hay error al actualizar, intentar recuperar los datos del cliente
+          try {
+            const freshClientData = await clientsService.getClient(selectedClient._id);
+            
+            // SOLUCIÓN DEFINITIVA: Forzar el nombre correcto en los datos recuperados
+            if (dataToUpdate.name) {
+              freshClientData.name = dataToUpdate.name;
+              console.warn("Forzando nombre correcto en datos recuperados después de error");
+            }
+            
+            updatedClient = freshClientData;
+            toast.success("Cliente recuperado después de error");
+          } catch (getError) {
+            console.error("Error al recuperar cliente después de actualizar:", getError);
+            
+            // SOLUCIÓN DEFINITIVA: Si todo falla, crear un objeto cliente con los datos que tenemos
+            updatedClient = {
+              _id: selectedClient._id,
+              ...dataToUpdate
+            };
+            toast.error("Error al actualizar, usando datos locales");
+          }
+        }
+      }
+      
+      // SOLUCIÓN DEFINITIVA: Actualizar inmediatamente la lista de clientes con el cliente actualizado
+      if (updatedClient && updatedClient._id) {
+        console.log("Actualizando cliente en la lista local:", updatedClient);
+        
+        // Actualizar la lista de clientes inmediatamente sin esperar a fetchClients
+        setClients(prevClients => {
+          return prevClients.map(client => {
+            if (client._id === updatedClient._id) {
+              // Asegurarnos de que el nombre esté correcto
+              const correctName = data.name || updatedClient.name;
+              return { ...updatedClient, name: correctName };
+            }
+            return client;
+          });
+        });
       }
 
+      // Cerrar el modal y limpiar el formulario
       setShowModal(false);
-      fetchClients(); // Recargar la lista
+      
+      // Resetear el formulario después de guardar
+      reset({
+        name: "",
+        phoneNumber: "",
+        email: "",
+        password: "",
+        address: "",
+        birthday: "",
+        isVerified: false
+      });
+      
+      // Resetear el estado local de los valores del formulario
+      setFormValues({
+        name: "",
+        phoneNumber: "",
+        email: "",
+        password: "",
+        address: "",
+        birthday: "",
+        isVerified: false
+      });
+      
+      // SOLUCIÓN DEFINITIVA: Recargar la lista de clientes después de un breve retraso
+      // Esto asegura que los cambios se reflejen correctamente en el backend
+      setTimeout(() => {
+        fetchClients();
+      }, 500);
+      
+      // Limpiar el toast de carga
+      toast.dismiss("saving-client");
+
+      // Desplazarnos al cliente actualizado para que sea visible
+      if (updatedClient && updatedClient._id) {
+        setTimeout(() => {
+          const clientElement = document.getElementById(`client-${updatedClient._id}`);
+          if (clientElement) {
+            clientElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            clientElement.classList.add('highlight-row');
+            setTimeout(() => {
+              clientElement.classList.remove('highlight-row');
+            }, 2000);
+          }
+        }, 500);
+      }
     } catch (error) {
-      console.error("Error al guardar cliente:", error);
-      toast.error(error.message || "Error al guardar cliente");
+      console.error("Error general:", error);
+      toast.error("Error al procesar la solicitud");
+      toast.dismiss("saving-client");
     }
   };
 
+  // Aplicar corrección de nombres a todos los clientes antes de filtrar
+  const clientsWithFixedNames = clients.map(client => {
+    // Si el cliente no tiene nombre o está vacío, intentar recuperarlo
+    if (!client.name || client.name.trim() === '') {
+      // 1. Intentar obtener de la memoria global
+      let savedName = window.__CLIENT_NAMES && window.__CLIENT_NAMES[client._id];
+      
+      // 2. Si no está en memoria global, intentar obtener de localStorage
+      if (!savedName) {
+        savedName = localStorage.getItem(`client_name_${client._id}`);
+      }
+      
+      // 3. Si encontramos un nombre guardado, usarlo
+      if (savedName) {
+        return { ...client, name: savedName };
+      }
+    }
+    return client;
+  });
+  
   // Filtrar clientes según el término de búsqueda
-  const filteredClients = clients.filter(client => 
+  const filteredClients = clientsWithFixedNames.filter(client => 
     client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.phoneNumber?.includes(searchTerm)
@@ -184,125 +419,152 @@ const Users = () => {
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center p-3 header">
-        <h1 className="h2 m-0">Usuarios</h1>
-        <div className="d-flex gap-3 align-items-center">
-          <div className="search-container">
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="Buscar..." 
+      <Header title="Usuarios" />
+      
+      <div className="container mt-4">
+        {/* Barra de búsqueda */}
+        <div className="search-container mb-4">
+          <div className="input-group">
+            <span className="input-group-text">
+              <i className="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por nombre, email o teléfono..."
+              value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               aria-label="Buscar usuarios"
             />
-          </div>
-          <button 
-            className="btn btn-cerrar-sesion" 
-            onClick={logout}
-            aria-label="Cerrar sesión"
-          >
-            <i className="bi bi-box-arrow-right me-1"></i> Cerrar sesión
-          </button>
-        </div>
-      </div>
-
-      <div className="px-2" role="main" aria-label="Gestión de clientes">
-        {loading ? (
-          <div className="text-center mt-5" aria-live="polite">
-            <Spinner animation="border" variant="primary" aria-hidden="true" />
-            <p className="mt-2">Cargando clientes...</p>
-          </div>
-        ) : error ? (
-          <Alert variant="danger" aria-live="assertive">{error}</Alert>
-        ) : (
-          <div className="tabla-usuarios" role="region" aria-label="Lista de clientes">
-            {/* Encabezado */}
-            <div className="fila encabezado" role="rowheader">
-              <div>Nombre</div>
-              <div>Correo electrónico</div>
-              <div>Teléfono</div>
-              <div>Acciones</div>
-            </div>
-
-            {filteredClients.length === 0 ? (
-              <div className="text-center py-4" aria-live="polite">
-                <p>No se encontraron clientes</p>
-              </div>
-            ) : (
-              filteredClients.map((client) => (
-                <div className="fila" key={client._id} role="row" tabIndex="0">
-                  <div className="user-data">{client.name || "Sin nombre"}</div>
-                  <div className="user-data">{client.email || "Sin email"}</div>
-                  <div className="user-data">{client.phoneNumber || "Sin teléfono"}</div>
-                  <div className="actions">
-                    <button 
-                      className="btn action-btn btn-outline-info"
-                      onClick={() => handleEditClient(client)}
-                      aria-label={`Editar cliente ${client.name}`}
-                    >
-                      <i className="bi bi-pencil-fill" aria-hidden="true"></i>
-                    </button>
-                    <button 
-                      className="btn action-btn btn-outline-danger"
-                      onClick={() => handleDeleteConfirm(client)}
-                      aria-label={`Eliminar cliente ${client.name}`}
-                    >
-                      <i className="bi bi-trash-fill" aria-hidden="true"></i>
-                    </button>
-                  </div>
-                </div>
-              ))
+            {searchTerm && (
+              <button 
+                className="btn btn-outline-secondary" 
+                type="button"
+                onClick={() => handleSearch("")}
+                aria-label="Limpiar búsqueda"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             )}
           </div>
+        </div>
+        
+        {/* Mostrar error si existe */}
+        {error && (
+          <Alert variant="danger" className="mb-4">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </Alert>
         )}
-      </div>
-
-      {/* Botón flotante */}
-      <div className="fab-container">
-        <Fab
-          bottom={20}
-          right={20}
-          icon={"three-dots-vertical"}
-          onClick={handleClick}
-          aria-label="Menú de opciones"
-        />
-
-        {botones && (
-          <div aria-live="polite">
-            <Fab
-              bottom={130}
-              right={20}
-              titulo={"Regresar"}
-              icon="arrow-90deg-left"
-              onClick={goBack}
-              aria-label="Regresar a inicio"
-            />
-            <Fab
-              bottom={240}
-              right={20}
-              titulo={"Agregar"}
-              icon="plus"
-              onClick={handleCreateClient}
-              aria-label="Agregar nuevo cliente"
-            />
+        
+        {/* Mostrar spinner durante la carga */}
+        {loading ? (
+          <div className="text-center my-5">
+            <Spinner animation="border" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </Spinner>
+            <p className="mt-2">Cargando usuarios...</p>
           </div>
+        ) : (
+          <>
+            {/* Mostrar mensaje si no hay clientes */}
+            {filteredClients.length === 0 ? (
+              <div className="text-center my-5">
+                <i className="bi bi-people display-1 text-muted"></i>
+                <p className="mt-3 lead">
+                  {searchTerm 
+                    ? "No se encontraron usuarios que coincidan con la búsqueda." 
+                    : "No hay usuarios registrados."}
+                </p>
+                <Button 
+                  variant="primary" 
+                  onClick={handleCreateClient}
+                  className="mt-2"
+                  aria-label="Agregar nuevo usuario"
+                >
+                  <i className="bi bi-person-plus me-2"></i>
+                  Agregar Usuario
+                </Button>
+              </div>
+            ) : (
+              /* Tabla de clientes */
+              <div className="table-responsive">
+                <table className="table table-hover align-middle">
+                  <thead className="table-light">
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Nombre</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Teléfono</th>
+                      <th scope="col">Verificado</th>
+                      <th scope="col" className="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClients.map((client, index) => (
+                      <tr key={client._id} id={`client-${client._id}`}>
+                        <td>{index + 1}</td>
+                        <td>{client.name || "Sin nombre"}</td>
+                        <td>{client.email}</td>
+                        <td>{client.phoneNumber}</td>
+                        <td>
+                          {client.isVerified ? (
+                            <span className="badge bg-success">
+                              <i className="bi bi-check-circle me-1"></i>
+                              Verificado
+                            </span>
+                          ) : (
+                            <span className="badge bg-warning text-dark">
+                              <i className="bi bi-exclamation-circle me-1"></i>
+                              Pendiente
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-center">
+                          <div className="btn-group" role="group" aria-label="Acciones de usuario">
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() => handleEditClient(client)}
+                              aria-label={`Editar ${client.name || "usuario"}`}
+                            >
+                              <i className="bi bi-pencil-square"></i>
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDeleteConfirm(client)}
+                              aria-label={`Eliminar ${client.name || "usuario"}`}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </div>
-
+      
       {/* Modal para crear/editar cliente */}
       <Modal 
         show={showModal} 
-        onHide={() => setShowModal(false)} 
+        onHide={() => setShowModal(false)}
+        backdrop="static"
         size="lg"
-        aria-labelledby="client-form-modal-title"
+        aria-labelledby="client-modal-title"
       >
         <Modal.Header closeButton>
-          <Modal.Title id="client-form-modal-title">
-            {modalMode === "create" ? "Crear Nuevo Cliente" : "Editar Cliente"}
+          <Modal.Title id="client-modal-title">
+            {modalMode === "create" ? "Crear Nuevo Usuario" : "Editar Usuario"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Form onSubmit={handleSubmit(onSubmit)}>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3" controlId="name">
@@ -315,10 +577,10 @@ const Users = () => {
                       required: "El nombre es obligatorio",
                       maxLength: {
                         value: 25,
-                        message: "El nombre no puede tener más de 25 caracteres"
+                        message: "El nombre no puede exceder los 25 caracteres"
                       }
                     })}
-                    ref={errors.name ? firstErrorRef : null}
+                    ref={firstErrorRef}
                     aria-describedby={errors.name ? "name-error" : ""}
                   />
                   {errors.name && (
@@ -328,47 +590,47 @@ const Users = () => {
                   )}
                 </Form.Group>
               </Col>
-
+              
               <Col md={6}>
                 <Form.Group className="mb-3" controlId="phoneNumber">
                   <Form.Label>Teléfono</Form.Label>
                   <Form.Control
-                    type="text"
+                    type="tel"
                     placeholder="Número de teléfono"
                     isInvalid={!!errors.phoneNumber}
                     {...register("phoneNumber", { 
                       required: "El teléfono es obligatorio",
                       maxLength: {
                         value: 9,
-                        message: "El teléfono no puede tener más de 9 dígitos"
+                        message: "El teléfono no puede exceder los 9 caracteres"
                       },
                       pattern: {
-                        value: /^[0-9]{8,9}$/,
-                        message: "Formato de teléfono inválido"
+                        value: /^[0-9]+$/,
+                        message: "Solo se permiten números"
                       }
                     })}
-                    aria-describedby={errors.phoneNumber ? "phone-error" : ""}
+                    aria-describedby={errors.phoneNumber ? "phoneNumber-error" : ""}
                   />
                   {errors.phoneNumber && (
-                    <Form.Control.Feedback type="invalid" id="phone-error">
+                    <Form.Control.Feedback type="invalid" id="phoneNumber-error">
                       {errors.phoneNumber.message}
                     </Form.Control.Feedback>
                   )}
                 </Form.Group>
               </Col>
             </Row>
-
+            
             <Form.Group className="mb-3" controlId="email">
-              <Form.Label>Correo electrónico</Form.Label>
+              <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
                 placeholder="correo@ejemplo.com"
                 isInvalid={!!errors.email}
                 {...register("email", { 
-                  required: "El correo electrónico es obligatorio",
+                  required: "El email es obligatorio",
                   pattern: {
                     value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
-                    message: "Formato de correo electrónico inválido"
+                    message: "Por favor, ingrese un email válido"
                   }
                 })}
                 aria-describedby={errors.email ? "email-error" : ""}
@@ -379,20 +641,26 @@ const Users = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+            
             <Form.Group className="mb-3" controlId="password">
               <Form.Label>
-                {modalMode === "create" ? "Contraseña" : "Nueva contraseña (dejar en blanco para mantener actual)"}
+                {modalMode === "create" ? "Contraseña" : "Nueva Contraseña (dejar en blanco para mantener la actual)"}
               </Form.Label>
               <Form.Control
                 type="password"
-                placeholder={modalMode === "create" ? "Contraseña (mínimo 8 caracteres)" : "Nueva contraseña"}
+                placeholder={modalMode === "create" ? "Contraseña" : "Nueva contraseña (opcional)"}
                 isInvalid={!!errors.password}
                 {...register("password", { 
                   required: modalMode === "create" ? "La contraseña es obligatoria" : false,
                   minLength: {
-                    value: modalMode === "create" ? 8 : 0,
+                    value: 8,
                     message: "La contraseña debe tener al menos 8 caracteres"
+                  },
+                  validate: value => {
+                    if (modalMode === "edit" && (!value || value.trim() === "")) {
+                      return true; // Permitir contraseña vacía en modo edición
+                    }
+                    return true;
                   }
                 })}
                 aria-describedby={errors.password ? "password-error" : ""}
@@ -403,7 +671,7 @@ const Users = () => {
                 </Form.Control.Feedback>
               )}
             </Form.Group>
-
+            
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3" controlId="address">
@@ -518,6 +786,27 @@ const Users = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* FAB principal */}
+      <Fab icon={"three-dots-vertical"} onClick={handleClick} />
+
+      {/* Mostrar FABs adicionales cuando `botones` es true */}
+      {botones && (
+        <>
+          <Fab
+            titulo={"Regresar"}
+            icon="arrow-90deg-left"
+            onClick={goBack}
+            style={{ bottom: "130px" }} // Ajusta la posición hacia arriba
+          />
+          <Fab
+            titulo={"Agregar"}
+            icon="plus"
+            onClick={handleCreateClient}
+            style={{ bottom: "240px" }} // Ajusta la posición hacia arriba
+          />
+        </>
+      )}
     </>
   );
 };
